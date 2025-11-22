@@ -1,0 +1,161 @@
+<!-- templates/dashboard.html -->
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Stock Market Analysis{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="mb-4"><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
+
+    {% if not has_symbols %}
+    <!-- Empty State -->
+    <div class="alert alert-info">
+        <h4><i class="fas fa-info-circle"></i> Get Started</h4>
+        <p>You haven't added any stocks yet. Start by:</p>
+        <ul>
+            <li><a href="{% url 'stock_search' %}">Searching for stocks</a> to add to your watchlist</li>
+            <li><a href="{% url 'portfolio_list' %}">Creating a portfolio</a> to track your investments</li>
+        </ul>
+    </div>
+    {% else %}
+
+    <!-- Market Overview -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-line"></i> Market Overview</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Symbol</th>
+                                    <th>Last Price</th>
+                                    <th>Change %</th>
+                                    <th>Volume</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for stock in market_overview %}
+                                <tr>
+                                    <td><strong>{{ stock.symbol }}</strong></td>
+                                    <td>₹{{ stock.last_close|floatformat:2 }}</td>
+                                    <td class="{% if stock.change_pct >= 0 %}positive{% else %}negative{% endif %}">
+                                        {{ stock.change_pct|floatformat:2 }}%
+                                    </td>
+                                    <td>{{ stock.volume|floatformat:0 }}</td>
+                                    <td>
+                                        <a href="{% url 'stock_detail' stock.symbol %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trending Stocks -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-fire"></i> Trending Stocks (High Volatility)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for stock in trending %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5>{{ stock.symbol }}</h5>
+                                    <p class="mb-1">
+                                        <strong>Price:</strong> ₹{{ stock.latest_price|floatformat:2 }}
+                                    </p>
+                                    <p class="mb-1 {% if stock.price_chg_pct >= 0 %}positive{% else %}negative{% endif %}">
+                                        <strong>Change:</strong> {{ stock.price_chg_pct|floatformat:2 }}%
+                                    </p>
+                                    <p class="mb-1">
+                                        <strong>Volatility:</strong> {{ stock.volatility|floatformat:4 }}
+                                    </p>
+                                    <a href="{% url 'stock_detail' stock.symbol %}" class="btn btn-sm btn-primary mt-2">
+                                        View Details
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Portfolio Summary -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-briefcase"></i> Your Portfolios</h5>
+                </div>
+                <div class="card-body">
+                    {% if portfolios %}
+                    <ul class="list-group">
+                        {% for portfolio in portfolios %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ portfolio.name }}</strong>
+                                <br>
+                                <small class="text-muted">{{ portfolio.holdings.count }} holdings</small>
+                            </div>
+                            <a href="{% url 'portfolio_detail' portfolio.id %}" class="btn btn-sm btn-primary">
+                                View
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-muted">No portfolios yet.</p>
+                    {% endif %}
+                    <a href="{% url 'portfolio_list' %}" class="btn btn-outline-primary mt-3">
+                        Manage Portfolios
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-eye"></i> Your Watchlist</h5>
+                </div>
+                <div class="card-body">
+                    {% if watchlist %}
+                    <ul class="list-group">
+                        {% for item in watchlist %}
+                        <li class="list-group-item">
+                            <strong>{{ item.symbol }}</strong>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-muted">No stocks in watchlist.</p>
+                    {% endif %}
+                    <a href="{% url 'watchlist' %}" class="btn btn-outline-primary mt-3">
+                        Manage Watchlist
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% endif %}
+</div>
+{% endblock %}

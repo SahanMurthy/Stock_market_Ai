@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="dashboard-container">
+    
+    <!-- Market Indices Row -->
+    <div class="mdc-layout-grid">
+        <div class="mdc-layout-grid__inner">
+            {% for name, data in market_data.items %}
+            <div class="mdc-layout-grid__cell--span-4">
+                <div class="mdc-card market-index-card">
+                    <div class="mdc-card__primary-action">
+                        <div class="mdc-card__content">
+                            <h6 class="mdc-typography--headline6">{{ name }}</h6>
+                            <p class="mdc-typography--headline4">{{ data.current_price|floatformat:2 }}</p>
+                            <div class="change-indicator {% if data.change > 0 %}positive{% else %}negative{% endif %}">
+                                <i class="material-icons">{% if data.change > 0 %}trending_up{% else %}trending_down{% endif %}</i>
+                                <span>{{ data.change_percent|floatformat:2 }}%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Main Content Row -->
+    <div class="mdc-layout-grid">
+        <div class="mdc-layout-grid__inner">
+            
+            <!-- AI Recommendations -->
+            <div class="mdc-layout-grid__cell--span-8">
+                <div class="mdc-card">
+                    <div class="mdc-card__content">
+                        <h6 class="mdc-typography--headline6">🤖 AI Stock Recommendations</h6>
+                        <div class="mdc-data-table">
+                            <div class="mdc-data-table__table-container">
+                                <table class="mdc-data-table__table">
+                                    <thead>
+                                        <tr class="mdc-data-table__header-row">
+                                            <th class="mdc-data-table__header-cell">Symbol</th>
+                                            <th class="mdc-data-table__header-cell">Recommendation</th>
+                                            <th class="mdc-data-table__header-cell">Score</th>
+                                            <th class="mdc-data-table__header-cell">Target Price</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="mdc-data-table__content">
+                                        {% for stock in recommendations %}
+                                        <tr class="mdc-data-table__row">
+                                            <td class="mdc-data-table__cell">
+                                                <a href="/stocks/{{ stock.symbol }}/">{{ stock.symbol }}</a>
+                                            </td>
+                                            <td class="mdc-data-table__cell">
+                                                <div class="mdc-chip recommendation-chip recommendation-{{ stock.recommendation|lower }}">
+                                                    <div class="mdc-chip__text">{{ stock.recommendation }}</div>
+                                                </div>
+                                            </td>
+                                            <td class="mdc-data-table__cell">{{ stock.score|floatformat:2 }}</td>
+                                            <td class="mdc-data-table__cell">₹{{ stock.target_price|floatformat:2 }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Actions Sidebar -->
+            <div class="mdc-layout-grid__cell--span-4">
+                <div class="mdc-card">
+                    <div class="mdc-card__content">
+                        <h6 class="mdc-typography--headline6">Quick Actions</h6>
+                        
+                        <!-- SIP Calculator -->
+                        <div class="action-item">
+                            <button class="mdc-button mdc-button--raised full-width" onclick="openSIPCalculator()">
+                                <i class="material-icons mdc-button__icon">calculate</i>
+                                <span class="mdc-button__label">SIP Calculator</span>
+                            </button>
+                        </div>
+                        
+                        <!-- Portfolio -->
+                        <div class="action-item">
+                            <button class="mdc-button mdc-button--outlined full-width" onclick="location.href='/portfolio/'">
+                                <i class="material-icons mdc-button__icon">account_balance</i>
+                                <span class="mdc-button__label">My Portfolio</span>
+                            </button>
+                        </div>
+                        
+                        <!-- Market Analysis -->
+                        <div class="action-item">
+                            <button class="mdc-button mdc-button--outlined full-width" onclick="refreshRecommendations()">
+                                <i class="material-icons mdc-button__icon">refresh</i>
+                                <span class="mdc-button__label">Refresh Analysis</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Live Market Status -->
+                <div class="mdc-card market-status-card">
+                    <div class="mdc-card__content">
+                        <h6 class="mdc-typography--headline6">Market Status</h6>
+                        <div class="status-indicator">
+                            <div class="status-dot live"></div>
+                            <span>Market Open</span>
+                        </div>
+                        <p class="mdc-typography--body2">Last updated: <span id="last-update">{{ last_update }}</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SIP Calculator Modal -->
+<div class="mdc-dialog" id="sip-calculator-dialog">
+    <div class="mdc-dialog__container">
+        <div class="mdc-dialog__surface">
+            <h2 class="mdc-dialog__title">SIP Calculator</h2>
+            <div class="mdc-dialog__content">
+                <form id="sip-form">
+                    <div class="mdc-text-field mdc-text-field--filled">
+                        <span class="mdc-text-field__ripple"></span>
+                        <span class="mdc-floating-label">Target Amount (₹)</span>
+                        <input class="mdc-text-field__input" type="number" name="target_amount" required>
+                        <span class="mdc-line-ripple"></span>
+                    </div>
+                    
+                    <div class="mdc-text-field mdc-text-field--filled">
+                        <span class="mdc-text-field__ripple"></span>
+                        <span class="mdc-floating-label">Investment Period (Years)</span>
+                        <input class="mdc-text-field__input" type="number" name="years" required>
+                        <span class="mdc-line-ripple"></span>
+                    </div>
+                    
+                    <div class="mdc-text-field mdc-text-field--filled">
+                        <span class="mdc-text-field__ripple"></span>
+                        <span class="mdc-floating-label">Expected Return (%)</span>
+                        <input class="mdc-text-field__input" type="number" name="annual_return" value="12" step="0.1">
+                        <span class="mdc-line-ripple"></span>
+                    </div>
+                </form>
+                
+                <div id="sip-results" style="display: none;">
+                    <div class="result-card">
+                        <h6>Monthly SIP Required</h6>
+                        <p class="result-value">₹<span id="monthly-sip"></span></p>
+                    </div>
+                    <div class="result-card">
+                        <h6>Total Investment</h6>
+                        <p class="result-value">₹<span id="total-investment"></span></p>
+                    </div>
+                    <div class="result-card">
+                        <h6>Final Corpus</h6>
+                        <p class="result-value">₹<span id="final-corpus"></span></p>
+                    </div>
+                </div>
+            </div>
+            <footer class="mdc-dialog__actions">
+                <button type="button" class="mdc-button mdc-dialog__button" data-mdc-dialog-action="close">
+                    <span class="mdc-button__label">Close</span>
+                </button>
+                <button type="button" class="mdc-button mdc-button--raised mdc-dialog__button" onclick="calculateSIP()">
+                    <span class="mdc-button__label">Calculate</span>
+                </button>
+            </footer>
+        </div>
+    </div>
+    <div class="mdc-dialog__scrim"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Real-time updates via WebSocket
+const socket = new WebSocket('ws://localhost:8000/ws/dashboard/');
+
+socket.onmessage = function(e) {
+    const data = JSON.parse(e.data);
+    updateMarketData(data);
+};
+
+function updateMarketData(data) {
+    // Update market indices in real-time
+    document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+}
+
+function openSIPCalculator() {
+    const dialog = new mdc.dialog.MDCDialog(document.querySelector('#sip-calculator-dialog'));
+    dialog.open();
+}
+
+function calculateSIP() {
+    const formData = new FormData(document.getElementById('sip-form'));
+    
+    fetch('/api/sip/calculate/', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('monthly-sip').textContent = data.monthly_sip.toLocaleString();
+        document.getElementById('total-investment').textContent = data.total_investment.toLocaleString();
+        document.getElementById('final-corpus').textContent = data.final_corpus.toLocaleString();
+        document.getElementById('sip-results').style.display = 'block';
+    });
+}
+
+function refreshRecommendations() {
+    fetch('/api/recommendations/')
+    .then(response => response.json())
+    .then(data => {
+        // Update recommendations table
+        location.reload();
+    });
+}
+</script>
+{% endblock %}

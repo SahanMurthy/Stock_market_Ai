@@ -1,0 +1,101 @@
+<!-- templates/home.html -->
+{% extends 'base.html' %}
+
+{% block title %}Home - Stock Market Analysis{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Hero Section -->
+    <div class="row align-items-center py-5">
+        <div class="col-lg-6">
+            <h1 class="display-4 fw-bold">Stock Market Analysis Platform</h1>
+            <p class="lead">Real-time stock analysis, portfolio management, and investment planning powered by AI.</p>
+            <div class="d-grid gap-2 d-md-flex">
+                <a href="{% url 'dashboard' %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-tachometer-alt"></i> Go to Dashboard
+                </a>
+                <a href="{% url 'stock_search' %}" class="btn btn-outline-primary btn-lg">
+                    <i class="fas fa-search"></i> Search Stocks
+                </a>
+            </div>
+        </div>
+        <div class="col-lg-6 text-center">
+            <i class="fas fa-chart-line" style="font-size: 15rem; color: var(--primary-color); opacity: 0.2;"></i>
+        </div>
+    </div>
+
+    <!-- Features -->
+    <div class="row mt-5">
+        <div class="col-md-4">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <i class="fas fa-chart-bar fa-3x text-primary mb-3"></i>
+                    <h4 class="card-title">Real-Time Analysis</h4>
+                    <p class="card-text">Get live market data and technical indicators for informed decision making.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <i class="fas fa-briefcase fa-3x text-success mb-3"></i>
+                    <h4 class="card-title">Portfolio Management</h4>
+                    <p class="card-text">Track your investments, monitor performance, and manage multiple portfolios.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <i class="fas fa-calculator fa-3x text-info mb-3"></i>
+                    <h4 class="card-title">SIP Calculator</h4>
+                    <p class="card-text">Plan your systematic investments and retirement goals with precision.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Status -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-plug"></i> System Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Available APIs:</h6>
+                            <ul class="list-unstyled">
+                                {% if available_apis.gemini %}
+                                <li><i class="fas fa-check-circle text-success"></i> Gemini AI (Enabled)</li>
+                                {% else %}
+                                <li><i class="fas fa-times-circle text-danger"></i> Gemini AI (Not configured)</li>
+                                {% endif %}
+
+                                {% if available_apis.alpha_vantage %}
+                                <li><i class="fas fa-check-circle text-success"></i> Alpha Vantage (Enabled)</li>
+                                {% else %}
+                                <li><i class="fas fa-times-circle text-muted"></i> Alpha Vantage (Optional)</li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Features:</h6>
+                            <ul class="list-unstyled">
+                                {% if enable_ai %}
+                                <li><i class="fas fa-robot text-success"></i> AI Recommendations Active</li>
+                                {% else %}
+                                <li><i class="fas fa-robot text-muted"></i> AI Recommendations Disabled</li>
+                                {% endif %}
+                                <li><i class="fas fa-sync text-success"></i> Real-Time Data Updates</li>
+                                <li><i class="fas fa-shield-alt text-success"></i> Risk Analysis</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

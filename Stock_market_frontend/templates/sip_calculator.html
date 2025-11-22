@@ -1,0 +1,206 @@
+<!-- templates/sip_calculator.html -->
+{% extends 'base.html' %}
+
+{% block title %}SIP Calculator - Stock Market Analysis{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4"><i class="fas fa-calculator"></i> SIP Calculator</h1>
+
+    <div class="row">
+        <!-- Calculator Form -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Calculate Your SIP</h5>
+                </div>
+                <div class="card-body">
+                    {% if error %}
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i> {{ error }}
+                    </div>
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label class="form-label">Monthly Investment (₹)</label>
+                            <input type="number" name="monthly_investment" class="form-control"
+                                   step="100" placeholder="e.g., 5000">
+                            <small class="text-muted">Leave blank if calculating from target amount</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Target Amount (₹)</label>
+                            <input type="number" name="target_amount" class="form-control"
+                                   step="1000" placeholder="e.g., 1000000">
+                            <small class="text-muted">Leave blank if providing monthly investment</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Investment Period (Years) <span class="text-danger">*</span></label>
+                            <input type="number" name="years" class="form-control"
+                                   min="1" max="50" required placeholder="e.g., 10">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Expected Annual Return (%) <span class="text-danger">*</span></label>
+                            <input type="number" name="annual_return" class="form-control"
+                                   step="0.1" required placeholder="e.g., 12.0">
+                            <small class="text-danger">Required: You must specify your expected return rate</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Inflation Rate (%) (Optional)</label>
+                            <input type="number" name="inflation_rate" class="form-control"
+                                   step="0.1" value="0" placeholder="e.g., 6.0">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Annual Step-up Rate (%) (Optional)</label>
+                            <input type="number" name="step_up_rate" class="form-control"
+                                   step="0.1" value="0" placeholder="e.g., 5.0">
+                            <small class="text-muted">Increase SIP by this % each year</small>
+                        </div>
+
+                        <hr>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" name="save_plan" class="form-check-input" id="savePlan">
+                            <label class="form-check-label" for="savePlan">Save this plan</label>
+                        </div>
+
+                        <div class="mb-3" id="planNameDiv" style="display: none;">
+                            <label class="form-label">Plan Name</label>
+                            <input type="text" name="plan_name" class="form-control" placeholder="My SIP Plan">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-calculator"></i> Calculate
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div class="col-lg-6">
+            {% if result %}
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">SIP Results</h5>
+                </div>
+                <div class="card-body">
+                    <div class="stat-card bg-light mb-3">
+                        <div class="stat-label">Monthly SIP</div>
+                        <div class="stat-value text-primary">₹{{ result.monthly_sip|floatformat:0 }}</div>
+                    </div>
+
+                    <div class="stat-card bg-light mb-3">
+                        <div class="stat-label">Total Investment</div>
+                        <div class="stat-value">₹{{ result.total_investment|floatformat:0 }}</div>
+                    </div>
+
+                    <div class="stat-card bg-light mb-3">
+                        <div class="stat-label">Future Value</div>
+                        <div class="stat-value text-success">₹{{ result.future_value|floatformat:0 }}</div>
+                    </div>
+
+                    <div class="stat-card bg-light mb-3">
+                        <div class="stat-label">Total Returns</div>
+                        <div class="stat-value text-success">₹{{ result.total_returns|floatformat:0 }}</div>
+                    </div>
+
+                    <div class="stat-card bg-light mb-3">
+                        <div class="stat-label">Return Percentage</div>
+                        <div class="stat-value text-success">{{ result.returns_percent|floatformat:2 }}%</div>
+                    </div>
+
+                    <div class="stat-card bg-light">
+                        <div class="stat-label">Wealth Multiplier</div>
+                        <div class="stat-value text-info">{{ result.wealth_multiplier }}x</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Projections -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Year-wise Projections</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-sm table-striped">
+                            <thead class="sticky-top bg-white">
+                                <tr>
+                                    <th>Year</th>
+                                    <th>Invested</th>
+                                    <th>Corpus</th>
+                                    <th>Returns</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for proj in result.projections %}
+                                <tr>
+                                    <td>{{ proj.year }}</td>
+                                    <td>₹{{ proj.invested|floatformat:0 }}</td>
+                                    <td>₹{{ proj.corpus|floatformat:0 }}</td>
+                                    <td class="positive">₹{{ proj.returns|floatformat:0 }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="card">
+                <div class="card-body text-center text-muted">
+                    <i class="fas fa-chart-pie fa-5x mb-3"></i>
+                    <p>Enter your SIP details to see results and projections.</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Saved Plans -->
+    {% if saved_plans %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-save"></i> Saved SIP Plans</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for plan in saved_plans %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6>{{ plan.name }}</h6>
+                                    <p class="mb-1"><strong>₹{{ plan.monthly_investment }}</strong>/month</p>
+                                    <p class="mb-1">{{ plan.years }} years @ {{ plan.annual_return }}%</p>
+                                    <a href="{% url 'sip_plan_detail' plan.id %}" class="btn btn-sm btn-primary">
+                                        View Details
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// Show/hide plan name input
+document.getElementById('savePlan').addEventListener('change', function() {
+    document.getElementById('planNameDiv').style.display = this.checked ? 'block' : 'none';
+});
+</script>
+{% endblock %}

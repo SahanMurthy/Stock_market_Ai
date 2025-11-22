@@ -1,0 +1,96 @@
+<!-- templates/portfolio_list.html -->
+{% extends 'base.html' %}
+
+{% block title %}Portfolios - Stock Market Analysis{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-briefcase"></i> My Portfolios</h1>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createPortfolioModal">
+            <i class="fas fa-plus"></i> Create Portfolio
+        </button>
+    </div>
+
+    {% if portfolios %}
+    <div class="row">
+        {% for portfolio in portfolios %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h4 class="card-title">{{ portfolio.name }}</h4>
+                    <p class="text-muted">{{ portfolio.description|truncatewords:15 }}</p>
+
+                    <hr>
+
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <small class="text-muted">Holdings</small>
+                            <h5>{{ portfolio.holdings.count }}</h5>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Total Value</small>
+                            <h5>₹{{ portfolio.total_value|floatformat:0 }}</h5>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-3">
+                        <div class="{% if portfolio.total_pnl >= 0 %}positive{% else %}negative{% endif %}">
+                            <strong>P&L: ₹{{ portfolio.total_pnl|floatformat:0 }}</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="{% url 'portfolio_detail' portfolio.id %}" class="btn btn-primary w-100">
+                        <i class="fas fa-eye"></i> View Details
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info text-center">
+        <i class="fas fa-info-circle fa-3x mb-3"></i>
+        <h4>No portfolios yet</h4>
+        <p>Create your first portfolio to start tracking your investments.</p>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createPortfolioModal">
+            <i class="fas fa-plus"></i> Create First Portfolio
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Create Portfolio Modal -->
+<div class="modal fade" id="createPortfolioModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create New Portfolio</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'portfolio_create' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Portfolio Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control" required
+                               placeholder="e.g., Long-term Holdings">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description (Optional)</label>
+                        <textarea name="description" class="form-control" rows="3"
+                                  placeholder="Brief description of this portfolio..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Create Portfolio
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
